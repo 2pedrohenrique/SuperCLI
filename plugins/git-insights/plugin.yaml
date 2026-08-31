@@ -1,0 +1,22 @@
+api_version: supercli.dev/v1
+id: git-insights
+name: Git Insights
+version: 0.1.0
+description: A tiny first-party plugin that adds repository insights to every workspace.
+homepage: https://github.com/2pedrohenrique/SuperCLI
+actions:
+  - id: status
+    name: Repository overview
+    description: Shows the current branch and concise working-tree state.
+    command: git
+    args: [status, --short, --branch]
+    dir: "{{workspace_dir}}"
+    workspaces: ["*"]
+
+  - id: recent-commits
+    name: Recent commits
+    description: Shows the ten latest decorated commits.
+    command: git
+    args: [log, --oneline, --decorate, -10]
+    dir: "{{workspace_dir}}"
+    workspaces: ["*"]

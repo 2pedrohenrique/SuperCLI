@@ -1,0 +1,23 @@
+api_version: supercli.dev/v1
+id: go-toolchain
+name: Go Toolchain
+version: 0.1.0
+description: Example community plugin with portable Go actions.
+homepage: https://github.com/2pedrohenrique/SuperCLI
+actions:
+  - id: version
+    name: Show Go version
+    description: Prints the active Go toolchain version.
+    command: go
+    args: [version]
+    workspaces: ["*"]
+
+  - id: test
+    name: Test workspace
+    description: Runs the workspace Go test suite in the embedded terminal.
+    command: go
+    args: [test, ./...]
+    dir: "{{workspace_dir}}"
+    interactive: true
+    confirm: true
+    workspaces: ["*"]

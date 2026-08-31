@@ -1,0 +1,27 @@
+/bin/
+/dist/
+*.exe
+*.test
+coverage.out
+.idea/
+.vscode/
+
+# Personal workstation configuration. It may contain company paths, hosts,
+# commands and project names. Generate it with `supercli --init`.
+/supercli.yaml
+/supercli.local.yaml
+*.local.yaml
+.env
+.env.*
+!.env.example
+
+# Local runtime output.
+/captures/
+/logs/
+/plugins/*
+!/plugins/git-insights/
+!/plugins/git-insights/**
+*.log
+*.prof
+.DS_Store
+Thumbs.db
