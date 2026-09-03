@@ -1602,10 +1602,6 @@ func fit(value string, width int) string {
 	value = ansi.Truncate(strings.ReplaceAll(value, "\t", "    "), width, "…")
 	return value + strings.Repeat(" ", max(0, width-lipgloss.Width(value)))
 }
-func fitPlain(value string, width int) string {
-	value = ansi.Truncate(value, width, "…")
-	return value + strings.Repeat(" ", max(0, width-lipgloss.Width(value)))
-}
 func wrapBlock(value string, width, height int) string {
 	var result []string
 	for _, line := range strings.Split(value, "\n") {

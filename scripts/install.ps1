@@ -2,7 +2,8 @@
 param(
     [string]$InstallDirectory = "$env:LOCALAPPDATA\SuperCLI\bin",
     [string]$ConfigPath = "$env:LOCALAPPDATA\SuperCLI\config.yaml",
-    [string]$PluginDirectory = "$env:LOCALAPPDATA\SuperCLI\plugins"
+    [string]$PluginDirectory = "$env:LOCALAPPDATA\SuperCLI\plugins",
+    [switch]$SkipEnvironmentSetup
 )
 
 $ErrorActionPreference = 'Stop'
@@ -44,14 +45,16 @@ if (-not (Test-Path -LiteralPath $ConfigPath)) {
     Copy-Item -LiteralPath (Join-Path $projectRoot 'internal\bootstrap\example.yaml') -Destination $ConfigPath
 }
 
-$userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
-$pathEntries = @($userPath -split ';' | Where-Object { $_ })
-if ($InstallDirectory -notin $pathEntries) {
-    $newPath = (@($pathEntries) + $InstallDirectory) -join ';'
-    [Environment]::SetEnvironmentVariable('Path', $newPath, 'User')
+if (-not $SkipEnvironmentSetup) {
+    $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
+    $pathEntries = @($userPath -split ';' | Where-Object { $_ })
+    if ($InstallDirectory -notin $pathEntries) {
+        $newPath = (@($pathEntries) + $InstallDirectory) -join ';'
+        [Environment]::SetEnvironmentVariable('Path', $newPath, 'User')
+    }
+    [Environment]::SetEnvironmentVariable('SUPERCLI_CONFIG', $ConfigPath, 'User')
+    [Environment]::SetEnvironmentVariable('SUPERCLI_PLUGIN_DIR', $PluginDirectory, 'User')
 }
-[Environment]::SetEnvironmentVariable('SUPERCLI_CONFIG', $ConfigPath, 'User')
-[Environment]::SetEnvironmentVariable('SUPERCLI_PLUGIN_DIR', $PluginDirectory, 'User')
 
 Write-Host "SuperCLI installed at $binaryPath" -ForegroundColor Green
 Write-Host "Configuration: $ConfigPath"

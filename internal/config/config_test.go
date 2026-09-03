@@ -70,6 +70,24 @@ func TestBundledConfigurationIsValid(t *testing.T) {
 	}
 }
 
+func TestLoadRejectsUnknownFieldsAndMultipleDocuments(t *testing.T) {
+	base := "version: 1\nworkspaces:\n  - id: app\n    processes:\n      - id: api\n        command: go\n"
+	for name, contents := range map[string]string{
+		"unknown field":      base + "unexpected: true\n",
+		"multiple documents": base + "---\n" + base,
+	} {
+		t.Run(name, func(t *testing.T) {
+			path := filepath.Join(t.TempDir(), "config.yaml")
+			if err := os.WriteFile(path, []byte(contents), 0o600); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := Load(path); err == nil {
+				t.Fatal("ambiguous configuration must be rejected")
+			}
+		})
+	}
+}
+
 func TestValidateRejectsDuplicateProcessAndBadPattern(t *testing.T) {
 	base := Config{Version: 1, Workspaces: []Workspace{{
 		ID: "app", Processes: []ProcessSpec{{ID: "api", Command: "go"}, {ID: "api", Command: "go"}},

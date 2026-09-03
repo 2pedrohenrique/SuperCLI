@@ -2,6 +2,9 @@
 
 ## 0.3.1-alpha
 
+- Prepared the repository for public collaboration with sanitized-history tests,
+  strict YAML parsing, pinned CI actions, dependency automation, issue forms and
+  portable starter configuration.
 - Added output fullscreen with F7/Esc, preserving selection and log workflows.
 - Matched scrolling to the visible log area without copying the entire buffer.
 - Fixed CI push triggers for master and main and enabled manual runs.

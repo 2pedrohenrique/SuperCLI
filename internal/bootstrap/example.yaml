@@ -1,5 +1,6 @@
 version: 1
-capture_dir: "${TEMP}/supercli/captures"
+# Leave empty to use the operating system's temporary directory.
+capture_dir: ""
 log_buffer_lines: 10000
 notifications:
   enabled: true
@@ -12,7 +13,7 @@ workspaces:
         name: Backend
         command: go
         args: ["run", "."]
-        dir: "${USERPROFILE}/Documents/Projects/my-app/backend"
+        dir: "~/Projects/my-app/backend"
         auto_start: false
         ready_patterns:
           - "(?i)(listening|started|ready)"
@@ -23,7 +24,7 @@ workspaces:
         name: Frontend
         command: npm
         args: ["start"]
-        dir: "${USERPROFILE}/Documents/Projects/my-app/frontend"
+        dir: "~/Projects/my-app/frontend"
         auto_start: false
         ready_patterns:
           - "(?i)(compiled successfully|local:|ready)"
@@ -35,20 +36,13 @@ workspaces:
         name: Open project in VS Code
         command: code
         args: ["."]
-        dir: "${USERPROFILE}/Documents/Projects/my-app"
-
-      - id: project-shell
-        name: Open interactive project shell
-        command: powershell.exe
-        args: ["-NoLogo"]
-        dir: "${USERPROFILE}/Documents/Projects/my-app"
-        interactive: true
+        dir: "~/Projects/my-app"
 
       - id: create-feature
         name: Create feature branch
         command: git
         args: ["checkout", "-b", "feature-{{task}}"]
-        dir: "${USERPROFILE}/Documents/Projects/my-app"
+        dir: "~/Projects/my-app"
         confirm: true
         inputs:
           - id: task

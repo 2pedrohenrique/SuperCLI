@@ -81,6 +81,21 @@ func TestDiscoverRejectsManifestDirectoryMismatch(t *testing.T) {
 	}
 }
 
+func TestDiscoverRejectsMultipleManifestDocuments(t *testing.T) {
+	root := t.TempDir()
+	dir := filepath.Join(root, "example")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	document := "api_version: supercli.dev/v1\nid: example\nname: Example\nversion: 1.0.0\nactions:\n  - id: run\n    name: Run\n    command: tool\n"
+	if err := os.WriteFile(filepath.Join(dir, ManifestFilename), []byte(document+"---\n"+document), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := Discover(root); err == nil {
+		t.Fatal("multiple manifest documents must be rejected")
+	}
+}
+
 func TestBundledGitInsightsPluginUsesThePublicContract(t *testing.T) {
 	root := filepath.Join("..", "..", "plugins")
 	plugins, err := Discover(root)

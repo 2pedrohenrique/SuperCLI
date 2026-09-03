@@ -1,0 +1,19 @@
+name: Feature request
+description: Propose a focused improvement to the developer workstation.
+title: "feat: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Developer problem
+      description: What workflow is difficult today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Describe the user-facing result and relevant trade-offs.
+    validations:
+      required: true

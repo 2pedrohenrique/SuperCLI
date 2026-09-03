@@ -1,8 +1,10 @@
 package config
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -83,7 +85,7 @@ func Load(path string) (Config, error) {
 		return Config{}, fmt.Errorf("read config %q: %w", path, err)
 	}
 	var cfg Config
-	if err := yaml.Unmarshal(data, &cfg); err != nil {
+	if err := decode(data, &cfg); err != nil {
 		return Config{}, fmt.Errorf("parse config %q: %w", path, err)
 	}
 	cfg.applyDefaults()
@@ -209,11 +211,27 @@ func loadRaw(path string) (Config, error) {
 		return Config{}, fmt.Errorf("read config %q: %w", path, err)
 	}
 	var cfg Config
-	if err := yaml.Unmarshal(data, &cfg); err != nil {
+	if err := decode(data, &cfg); err != nil {
 		return Config{}, fmt.Errorf("parse config %q: %w", path, err)
 	}
 	cfg.applyDefaults()
 	return cfg, nil
+}
+
+func decode(data []byte, destination *Config) error {
+	decoder := yaml.NewDecoder(bytes.NewReader(data))
+	decoder.KnownFields(true)
+	if err := decoder.Decode(destination); err != nil {
+		return err
+	}
+	var extra any
+	if err := decoder.Decode(&extra); !errors.Is(err, io.EOF) {
+		if err == nil {
+			return errors.New("multiple YAML documents are not supported")
+		}
+		return err
+	}
+	return nil
 }
 
 func write(path string, cfg Config) error {

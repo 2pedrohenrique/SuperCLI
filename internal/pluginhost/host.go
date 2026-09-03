@@ -1,7 +1,9 @@
 package pluginhost
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -62,6 +64,13 @@ func loadManifest(path string) (pluginapi.Manifest, error) {
 	decoder.KnownFields(true)
 	var manifest pluginapi.Manifest
 	if err := decoder.Decode(&manifest); err != nil {
+		return pluginapi.Manifest{}, fmt.Errorf("parse plugin manifest %q: %w", path, err)
+	}
+	var extra any
+	if err := decoder.Decode(&extra); !errors.Is(err, io.EOF) {
+		if err == nil {
+			return pluginapi.Manifest{}, fmt.Errorf("parse plugin manifest %q: multiple YAML documents are not supported", path)
+		}
 		return pluginapi.Manifest{}, fmt.Errorf("parse plugin manifest %q: %w", path, err)
 	}
 	if err := manifest.Validate(); err != nil {

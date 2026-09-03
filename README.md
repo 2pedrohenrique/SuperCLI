@@ -2,6 +2,10 @@
 
 > Current version: **v0.3.1-alpha**
 
+[![CI](https://github.com/2pedrohenrique/SuperCLI/actions/workflows/ci.yml/badge.svg)](https://github.com/2pedrohenrique/SuperCLI/actions/workflows/ci.yml)
+[![Go](https://img.shields.io/badge/Go-1.26%2B-00ADD8?logo=go)](go.mod)
+[![License](https://img.shields.io/badge/license-MIT%20%2B%20Commons%20Clause-EF4444)](LICENSE)
+
 SuperCLI is a configurable developer workstation inside the terminal. It runs
 multiple development processes concurrently, keeps each output in an isolated
 log view, reports failures through desktop notifications, and turns recurring
@@ -13,7 +17,7 @@ can contain private project names, paths, hosts and commands. The repository
 ships only the neutral template in `internal/bootstrap/example.yaml`; generate
 your own `supercli.yaml` with `supercli --init`.
 
-## What the first version does
+## What SuperCLI does
 
 - Runs backend, frontend, tests, or other long-running commands concurrently.
 - Shows one retained and scrollable log stream per process.
@@ -61,6 +65,16 @@ your own `supercli.yaml` with `supercli --init`.
 
 Requirements: Go 1.26+ and the tools referenced by your configuration.
 
+After the repository is public, a released version can be installed directly:
+
+```sh
+go install github.com/2pedrohenrique/SuperCLI/cmd/supercli@v0.3.1-alpha
+supercli --init
+supercli
+```
+
+Clone the repository, then on PowerShell:
+
 ```powershell
 go test ./...
 go build -o .\bin\supercli.exe .\cmd\supercli
@@ -68,7 +82,16 @@ if (-not (Test-Path .\supercli.yaml)) { .\bin\supercli.exe --init --config .\sup
 .\bin\supercli.exe --config .\supercli.yaml
 ```
 
-To install the binary and a non-overwriting copy of the current configuration:
+On Linux or macOS:
+
+```sh
+go test ./...
+go build -o ./bin/supercli ./cmd/supercli
+test -f ./supercli.yaml || ./bin/supercli --init --config ./supercli.yaml
+./bin/supercli --config ./supercli.yaml
+```
+
+To test, build and install the binary plus a neutral starter configuration:
 
 ```powershell
 .\scripts\install.ps1
@@ -76,7 +99,8 @@ To install the binary and a non-overwriting copy of the current configuration:
 
 The script installs to `%LOCALAPPDATA%\SuperCLI\bin` and adds that directory to
 the user `PATH`. It sets `SUPERCLI_CONFIG` to the installed configuration and
-never overwrites an existing file.
+never overwrites an existing configuration. If tests or compilation fail, the
+previously installed executable and configuration remain untouched.
 
 For a neutral starter file:
 
@@ -98,10 +122,10 @@ configuration directory.
 | `Enter` | Start selected process |
 | `a` | Start every process in the selected workspace |
 | `x` | Stop selected process |
-| `a` | Start every stopped process in the workspace |
 | `X` | Stop all processes |
 | `↑`/`↓`, `j`/`k`, `PgUp`/`PgDn` | Scroll logs |
 | `Home`, `End`/`f` | Oldest logs / resume following output |
+| `F7`, `Esc` | Expand output / return to tiled layout |
 | `c` | Ask for N and capture the latest N lines |
 | `l` | Clear retained output for the selected process, with confirmation |
 | `p` | Open the workspace action palette |
@@ -153,13 +177,12 @@ workspaces:
 ```
 
 Paths support environment variables and `~`. The bundled starter configuration
-targets Windows: on Linux/macOS, replace `${USERPROFILE}` with `~`, `${TEMP}`
-with your temporary directory and `powershell.exe` with your shell (for example
-`bash`, without `-NoLogo`). Configure your own project paths before starting.
-Commands are launched directly,
+uses portable home-relative paths and leaves the capture directory empty so the
+operating-system default is selected. Configure your own project paths before
+starting. Commands are launched directly,
 not through an implicit shell. This preserves argument boundaries and avoids
-shell injection. A shell can still be selected explicitly as an action, as the
-bundled project-shell action demonstrates.
+shell injection. A shell can still be selected explicitly as an interactive
+action; `t` automatically selects the native shell for the embedded terminal.
 
 Set `interactive: true` when the child must own stdin/stdout (for example SSH or
 a shell). SuperCLI hosts it through PTY/ConPTY and a VT emulator inside the
@@ -327,3 +350,5 @@ You may use, inspect, modify, contribute and redistribute it without charge,
 including inside a developer workstation. You may not sell SuperCLI, a renamed
 copy, hosted access, or a product/service whose value derives entirely or
 substantially from SuperCLI. See [`LICENSE`](LICENSE) for the governing terms.
+Because the Commons Clause restricts commercial sale, this is a source-available
+license rather than an OSI-approved open-source license.

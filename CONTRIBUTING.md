@@ -15,12 +15,19 @@ core, documentation, platform adapters or community plugins.
 go test ./...
 go vet ./...
 go build ./cmd/supercli
+go run honnef.co/go/tools/cmd/staticcheck@v0.8.1 ./...
+go run golang.org/x/vuln/cmd/govulncheck@v1.7.0 ./...
+go run github.com/zricethezav/gitleaks/v8@v8.30.1 git . --log-opts=--all --redact --no-banner
 ```
 
 Keep platform-specific behavior behind build-tagged files and avoid adding
 company names, hosts, paths, credentials or personal workstation configuration.
 `supercli.yaml` is intentionally ignored; tests and examples must use neutral
 temporary data.
+
+Commits must use a real or chosen public identity and must not contain employer
+or client information. The repository-policy tests enforce known private terms,
+common credential formats and local-configuration exclusions.
 
 ## Pull requests
 

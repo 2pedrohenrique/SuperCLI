@@ -3,14 +3,21 @@
 *.exe
 *.test
 coverage.out
+coverage
+coverage.*
 .idea/
 .vscode/
+.fleet/
+.history/
+.direnv/
+.envrc
 
 # Personal workstation configuration. It may contain company paths, hosts,
 # commands and project names. Generate it with `supercli --init`.
 /supercli.yaml
 /supercli.local.yaml
 *.local.yaml
+*.local.yml
 .env
 .env.*
 !.env.example
@@ -25,3 +32,10 @@ coverage.out
 *.prof
 .DS_Store
 Thumbs.db
+
+# Credentials and private signing material must never be committed.
+*.pem
+*.key
+*.pfx
+*.p12
+credentials*.json

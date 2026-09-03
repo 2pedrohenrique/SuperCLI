@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime/debug"
+	"strings"
 	"time"
 
 	tea "charm.land/bubbletea/v2"
@@ -42,7 +44,7 @@ func run(args []string) error {
 		return err
 	}
 	if *showVersion {
-		fmt.Println("SuperCLI", version)
+		fmt.Println("SuperCLI", effectiveVersion())
 		return nil
 	}
 	if *initConfig {
@@ -105,6 +107,17 @@ func run(args []string) error {
 		return fmt.Errorf("run TUI: %w", err)
 	}
 	return nil
+}
+
+func effectiveVersion() string {
+	if version != "dev" {
+		return version
+	}
+	info, ok := debug.ReadBuildInfo()
+	if !ok || info.Main.Version == "" || info.Main.Version == "(devel)" {
+		return version
+	}
+	return strings.TrimPrefix(info.Main.Version, "v")
 }
 
 func defaultPluginDir() string {
