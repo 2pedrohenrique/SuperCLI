@@ -126,6 +126,7 @@ type Model struct {
 	terminal           *terminalpkg.Session
 	terminalTitle      string
 	terminalFullscreen bool
+	outputFullscreen   bool
 	deleteProcess      bool
 	branchKey          string
 	branch             string
@@ -394,6 +395,10 @@ func (m Model) handleNormal(key tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		return m, m.refreshBranch()
 	}
 	switch key.Keystroke() {
+	case "f7":
+		m.outputFullscreen = !m.outputFullscreen
+	case "esc":
+		m.outputFullscreen = false
 	case "q":
 		if m.runtime.IsRunning() || (m.terminal != nil && m.terminal.Running()) {
 			m.mode = confirmQuitMode
@@ -983,13 +988,13 @@ func (m *Model) moveScroll(delta int) {
 		return
 	}
 	key := m.selectionKey()
-	maximum := max(0, len(m.runtime.Lines(w.ID, p.ID, -1))-m.logHeight())
+	maximum := max(0, m.runtime.Snapshot(w.ID, p.ID).LineCount-m.logHeight())
 	m.scroll[key] = min(maximum, max(0, m.scroll[key]+delta))
 }
 func (m *Model) scrollToOldest() {
 	w, p, ok := m.selection()
 	if ok {
-		m.scroll[m.selectionKey()] = max(0, len(m.runtime.Lines(w.ID, p.ID, -1))-m.logHeight())
+		m.scroll[m.selectionKey()] = max(0, m.runtime.Snapshot(w.ID, p.ID).LineCount-m.logHeight())
 	}
 }
 func (m Model) currentWorkspace() config.Workspace {
@@ -1013,7 +1018,12 @@ func (m Model) selectionKey() string {
 	}
 	return w.ID + "/" + p.ID
 }
-func (m Model) logHeight() int { return max(3, m.height-9) }
+func (m Model) logHeight() int {
+	if m.outputFullscreen {
+		return max(1, m.height-5)
+	}
+	return max(1, m.height-10)
+}
 
 var (
 	colorAccent = lipgloss.Color("#EF4444")
@@ -1054,6 +1064,8 @@ func (m Model) View() tea.View {
 	case normalMode, terminalMode:
 		if m.mode == terminalMode && m.terminalFullscreen {
 			content = m.renderFullscreenTerminal(w, h)
+		} else if m.mode == normalMode && m.outputFullscreen {
+			content = m.renderFullscreenOutput(w, h)
 		} else {
 			content = m.renderBase(w, h)
 		}
@@ -1150,13 +1162,13 @@ func (m Model) renderFullscreenTerminal(width, height int) string {
 }
 
 func (m Model) renderHome(width, height int) string {
-	art := `╭─◆──────────────────── DEVELOPER WORKSTATION ───────────────────◆─╮
-│  ███████╗██╗   ██╗██████╗ ███████╗██████╗  ██████╗██╗     ██╗  │
-│  ██╔════╝██║   ██║██╔══██╗██╔════╝██╔══██╗██╔════╝██║     ██║  │
-│  ███████╗██║   ██║██████╔╝█████╗  ██████╔╝██║     ██║     ██║  │
-│  ╚════██║██║   ██║██╔═══╝ ██╔══╝  ██╔══██╗██║     ██║     ██║  │
-│  ███████║╚██████╔╝██║     ███████╗██║  ██║╚██████╗███████╗██║  │
-│  ╚══════╝ ╚═════╝ ╚═╝     ╚══════╝╚═╝  ╚═╝ ╚═════╝╚══════╝╚═╝  │
+	art := `╭─◆──────────────────── DEVELOPER WORKSTATION ──────────────────◆─╮
+│  ███████╗██╗   ██╗██████╗ ███████╗██████╗  ██████╗██╗     ██╗   │
+│  ██╔════╝██║   ██║██╔══██╗██╔════╝██╔══██╗██╔════╝██║     ██║   │
+│  ███████╗██║   ██║██████╔╝█████╗  ██████╔╝██║     ██║     ██║   │
+│  ╚════██║██║   ██║██╔═══╝ ██╔══╝  ██╔══██╗██║     ██║     ██║   │
+│  ███████║╚██████╔╝██║     ███████╗██║  ██║╚██████╗███████╗██║   │
+│  ╚══════╝ ╚═════╝ ╚═╝     ╚══════╝╚═╝  ╚═╝ ╚═════╝╚══════╝╚═╝   │
 ╰─◆────────────────── COMMAND YOUR WORKSPACE ───────────────────◆─╯`
 	if width < 82 {
 		art = `╭─◆─ SUPERCLI ───────────────────────────╮
@@ -1175,7 +1187,7 @@ func (m Model) mainTileTitle() string {
 	if m.mode == terminalMode {
 		return strings.ToUpper(m.terminalTitle) + "  •  F7 FULLSCREEN  •  F6 DETACH"
 	}
-	return "OUTPUT"
+	return "OUTPUT  •  F7 FULLSCREEN"
 }
 
 func renderTile(title, body string, width, height int, active bool) string {
@@ -1437,6 +1449,7 @@ func whatsNewText() string {
 ◆ Captures open automatically in Notepad on Windows; output can be cleared.
 
 ◆ Terminal fullscreen (F7), visible cursor and Ctrl/Alt navigation sequences.
+◆ Output fullscreen (F7/Esc), with capture, clearing and viewport-aware scrolling.
 
 ◆ Rebuilt Workspaces and Session panels with denser operational context.
 
@@ -1529,7 +1542,7 @@ Tab    next process           a / X  start / stop all
 PgUp   scroll page            WORKFLOW
 Home   oldest logs            c      capture logs
 End/f  follow output          n      add project
-                               l      clear output
+F7/Esc fullscreen/tiles        l      clear output
                                p      actions
 GIT & TOOLS                    ?      help
 g      pull/push/checkout/cb/cm m     home

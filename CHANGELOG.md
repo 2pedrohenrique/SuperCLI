@@ -2,6 +2,10 @@
 
 ## 0.3.1-alpha
 
+- Added output fullscreen with F7/Esc, preserving selection and log workflows.
+- Matched scrolling to the visible log area without copying the entire buffer.
+- Fixed CI push triggers for master and main and enabled manual runs.
+- Made Windows installation stop on test/build failure before replacing binaries.
 - Finished workspace-wide Pull All with unique-repository discovery,
   current-branch pulls, concurrency and partial-failure summaries.
 - Added community plugin API v1, manifest discovery, namespaced action

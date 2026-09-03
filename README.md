@@ -152,10 +152,14 @@ workspaces:
             prompt: Task number
 ```
 
-Paths support environment variables and `~`. Commands are launched directly,
+Paths support environment variables and `~`. The bundled starter configuration
+targets Windows: on Linux/macOS, replace `${USERPROFILE}` with `~`, `${TEMP}`
+with your temporary directory and `powershell.exe` with your shell (for example
+`bash`, without `-NoLogo`). Configure your own project paths before starting.
+Commands are launched directly,
 not through an implicit shell. This preserves argument boundaries and avoids
 shell injection. A shell can still be selected explicitly as an action, as the
-PowerShell cleanup examples in `supercli.yaml` demonstrate.
+bundled project-shell action demonstrates.
 
 Set `interactive: true` when the child must own stdin/stdout (for example SSH or
 a shell). SuperCLI hosts it through PTY/ConPTY and a VT emulator inside the
@@ -165,6 +169,11 @@ While focused, `F6` or `Ctrl+]` detaches without closing the session and
 are forwarded to the embedded terminal. `Ctrl+A`, `Ctrl+arrows` and other editor
 control keys are encoded for the PTY. `F7` toggles fullscreen, and `t` returns
 to a detached session.
+
+In the output view, `F7` expands logs to the full window; `F7` or `Esc` restores
+the tiles. Process/workspace switching, scrolling, capture (`c`), clearing (`l`)
+and other shortcuts remain available. Closing a dialog returns to the same
+output layout, without stopping any process.
 
 ## Community plugins
 
@@ -305,6 +314,11 @@ binary itself, so it does not rely on Node, .NET, or a project checkout.
 - Added Windows capture opening, confirmed log clearing and retained-memory
   release.
 - Added terminal cursor, modified key sequences and `F7` fullscreen mode.
+- Added independent output fullscreen with `F7`/`Esc`, preserving log workflows.
+- Fixed viewport-aware scrolling, CI push triggers and installer failure handling.
+- Reworked Workspaces and Session panels while keeping one uniform background.
+- Aligned the Go module with `github.com/2pedrohenrique/SuperCLI` and removed the
+  previous personal surname from tracked source.
 
 ## License
 
@@ -313,6 +327,3 @@ You may use, inspect, modify, contribute and redistribute it without charge,
 including inside a developer workstation. You may not sell SuperCLI, a renamed
 copy, hosted access, or a product/service whose value derives entirely or
 substantially from SuperCLI. See [`LICENSE`](LICENSE) for the governing terms.
-- Reworked Workspaces and Session panels while keeping one uniform background.
-- Aligned the Go module with `github.com/2pedrohenrique/SuperCLI` and removed the
-  previous personal surname from tracked source.
