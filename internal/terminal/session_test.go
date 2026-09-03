@@ -22,15 +22,19 @@ func TestSessionRendersPTYOutput(t *testing.T) {
 	if err := session.Start(context.Background(), cmd, 80, 20); err != nil {
 		t.Fatal(err)
 	}
+	t.Cleanup(func() { _ = session.Close() })
 	deadline := time.After(10 * time.Second)
 	for {
 		select {
 		case event := <-session.Events():
-			if strings.Contains(session.Render(), "SUPERCLI_PTY_OK") {
+			if event.Kind == ExitEvent {
+				if event.Err != nil {
+					t.Fatal(event.Err)
+				}
+				if !strings.Contains(session.Render(), "SUPERCLI_PTY_OK") {
+					t.Fatalf("process exited before its final PTY output was rendered:\n%s", session.Render())
+				}
 				return
-			}
-			if event.Kind == ExitEvent && event.Err != nil {
-				t.Fatal(event.Err)
 			}
 		case <-deadline:
 			t.Fatalf("PTY output not rendered:\n%s", session.Render())

@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"image/color"
 	"io"
+	"os"
 	"os/exec"
 	"sync"
+	"time"
 
 	uv "github.com/charmbracelet/ultraviolet"
 	"github.com/charmbracelet/x/vt"
@@ -15,6 +17,11 @@ import (
 )
 
 type EventKind int
+
+const (
+	outputQuietPeriod  = 250 * time.Millisecond
+	outputDrainTimeout = 2 * time.Second
+)
 
 const (
 	OutputEvent EventKind = iota
@@ -65,19 +72,26 @@ func (s *Session) Start(parent context.Context, cmd *exec.Cmd, width, height int
 		return fmt.Errorf("start embedded terminal: %w", err)
 	}
 	s.pty, s.emulator, s.cmd, s.cancel, s.running = pty, emulator, cmd, cancel, true
-	go s.copyOutput(pty, emulator)
+	outputDone := make(chan struct{})
+	outputActivity := make(chan struct{}, 1)
+	go s.copyOutput(pty, emulator, outputActivity, outputDone)
 	go func() { _, _ = io.Copy(pty, emulator) }()
-	go s.wait(ctx, pty, emulator, cmd, cancel)
+	go s.wait(ctx, pty, emulator, cmd, cancel, outputActivity, outputDone)
 	return nil
 }
 
-func (s *Session) copyOutput(pty xpty.Pty, emulator *vt.SafeEmulator) {
+func (s *Session) copyOutput(pty xpty.Pty, emulator *vt.SafeEmulator, activity chan<- struct{}, done chan<- struct{}) {
+	defer close(done)
 	buffer := make([]byte, 32*1024)
 	for {
 		n, err := pty.Read(buffer)
 		if n > 0 {
 			_, _ = emulator.Write(buffer[:n])
 			s.emit(Event{Kind: OutputEvent})
+			select {
+			case activity <- struct{}{}:
+			default:
+			}
 		}
 		if err != nil {
 			return
@@ -85,9 +99,26 @@ func (s *Session) copyOutput(pty xpty.Pty, emulator *vt.SafeEmulator) {
 	}
 }
 
-func (s *Session) wait(ctx context.Context, pty xpty.Pty, emulator *vt.SafeEmulator, cmd *exec.Cmd, cancel context.CancelFunc) {
+func (s *Session) wait(ctx context.Context, pty xpty.Pty, emulator *vt.SafeEmulator, cmd *exec.Cmd, cancel context.CancelFunc, outputActivity <-chan struct{}, outputDone <-chan struct{}) {
 	err := xpty.WaitProcess(ctx, cmd)
 	cancel()
+	// Closing the parent's Unix slave allows EOF once the child has exited.
+	// Windows ConPTY does not expose a slave, so it uses the bounded drain below.
+	_, hasUnixSlave := pty.(interface{ Slave() *os.File })
+	if unix, ok := pty.(interface{ Slave() *os.File }); ok {
+		_ = unix.Slave().Close()
+	}
+	// A short-lived command can exit before the output goroutine is scheduled.
+	// Let it consume the PTY's final bytes before closing the emulator or
+	// emitting ExitEvent, so callers never observe an empty completed session.
+	if hasUnixSlave {
+		select {
+		case <-outputDone:
+		case <-time.After(outputDrainTimeout):
+		}
+	} else {
+		waitForQuietOutput(outputActivity, outputDone)
+	}
 	_ = pty.Close()
 	_ = emulator.Close()
 	s.mu.Lock()
@@ -97,6 +128,31 @@ func (s *Session) wait(ctx context.Context, pty xpty.Pty, emulator *vt.SafeEmula
 	}
 	s.mu.Unlock()
 	s.emit(Event{Kind: ExitEvent, Err: err})
+}
+
+func waitForQuietOutput(activity <-chan struct{}, done <-chan struct{}) {
+	quiet := time.NewTimer(outputQuietPeriod)
+	deadline := time.NewTimer(outputDrainTimeout)
+	defer quiet.Stop()
+	defer deadline.Stop()
+	for {
+		select {
+		case <-activity:
+			if !quiet.Stop() {
+				select {
+				case <-quiet.C:
+				default:
+				}
+			}
+			quiet.Reset(outputQuietPeriod)
+		case <-done:
+			return
+		case <-quiet.C:
+			return
+		case <-deadline.C:
+			return
+		}
+	}
 }
 
 func (s *Session) emit(event Event) {
