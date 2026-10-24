@@ -9,7 +9,7 @@ require (
 	github.com/charmbracelet/x/ansi v0.11.8
 	github.com/charmbracelet/x/vt v0.0.0-20260816001655-68d539dca504
 	github.com/charmbracelet/x/xpty v0.1.4
-	github.com/gen2brain/beeep v0.11.2
+	github.com/gen2brain/beeep v0.11.3
 	gopkg.in/yaml.v3 v3.0.1
 )
 
